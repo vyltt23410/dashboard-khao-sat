@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Khảo Sát Sản Phẩm Chăm Sóc Cá Nhân</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --color-primary: #DB2777;
+  --color-primary-light: #F472B6;
+  --color-primary-dark: #9D174D;
+  --color-secondary: #F97316;
+  --color-accent: #FACC15;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #6366F1;
+  --color-bg: #FAF7F8;
+  --color-card-bg: #FFFFFF;
+  --color-border: #F0E3E9;
+  --color-text: #1E1324;
+  --color-text-light: #6B5B66;
+  --color-text-muted: #A8959F;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--color-bg);
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(219,39,119,0.06) 0%, transparent 35%),
+    radial-gradient(circle at 100% 0%, rgba(249,115,22,0.06) 0%, transparent 35%);
+  color: var(--color-text);
+  margin: 0;
+  padding: 0;
+}
+
+.dashboard-container { max-width: 1440px; margin: 0 auto; padding: 24px; }
+
+/* HEADER */
+.dashboard-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
+  background: linear-gradient(120deg, var(--color-primary-dark) 0%, var(--color-primary) 55%, var(--color-secondary) 100%);
+  border-radius: 20px; padding: 28px 32px; color: white;
+  box-shadow: 0 12px 30px rgba(157, 23, 77, 0.25);
+  position: relative; overflow: hidden;
+}
+.dashboard-header::after {
+  content: "✨"; position: absolute; right: 28px; top: 50%; transform: translateY(-50%);
+  font-size: 64px; opacity: 0.15;
+}
+.dashboard-title { font-size: 26px; font-weight: 800; margin: 0; letter-spacing: -0.3px; }
+.dashboard-subtitle { font-size: 14px; color: rgba(255,255,255,0.88); margin-top: 6px; }
+.header-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.3);
+  padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; margin-top: 10px;
+  backdrop-filter: blur(6px);
+}
+
+.btn {
+  padding: 9px 18px; border: none; border-radius: 10px; font-size: 14px;
+  font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.btn-light { background: rgba(255,255,255,0.92); color: var(--color-primary-dark); }
+.btn-light:hover { background: #fff; transform: translateY(-1px); }
+.btn-secondary { background: white; color: var(--color-text); border: 1px solid var(--color-border); }
+.btn-secondary:hover { background: var(--color-bg); }
+
+/* FILTER BAR */
+.filter-bar {
+  background: white; padding: 16px 18px; border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 20px;
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  border: 1px solid var(--color-border);
+}
+.filter-label { font-size: 12px; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-right: -4px; }
+.filter-bar select, .filter-bar input {
+  padding: 9px 14px; border: 1px solid var(--color-border); border-radius: 10px;
+  font-size: 14px; background: var(--color-bg); min-width: 150px; color: var(--color-text);
+  font-family: inherit;
+}
+.filter-bar select:focus, .filter-bar input:focus {
+  outline: none; border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(219,39,119,0.12);
+}
+.filter-bar input[type="search"] { min-width: 220px; flex: 1; }
+
+.filter-chips { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; min-height: 4px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px;
+  background: var(--color-primary); color: white; border-radius: 16px;
+  font-size: 12px; font-weight: 600;
+}
+.chip button { background: none; border: none; color: white; cursor: pointer; font-size: 15px; line-height: 1; padding: 0; }
+
+/* INSIGHT BOX */
+.insight-box {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  color: white; padding: 22px 26px; border-radius: 16px; margin-bottom: 24px;
+  box-shadow: 0 8px 20px rgba(219,39,119,0.18);
+}
+.insight-box-title {
+  font-size: 13px; font-weight: 700; margin-bottom: 14px; opacity: 0.95;
+  text-transform: uppercase; letter-spacing: 0.6px; display: flex; align-items: center; gap: 8px;
+}
+.insight-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.insight-item {
+  font-size: 13.5px; line-height: 1.55; padding: 12px 14px; background: rgba(255,255,255,0.16);
+  border-radius: 10px; backdrop-filter: blur(10px);
+}
+.insight-item b { font-weight: 700; }
+
+/* KPI CARDS */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.kpi-card {
+  background: var(--color-card-bg); padding: 22px 24px; border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid var(--color-border);
+  transition: all 0.2s; position: relative; overflow: hidden;
+}
+.kpi-card:hover { box-shadow: 0 12px 20px rgba(219,39,119,0.12); transform: translateY(-3px); }
+.kpi-icon { font-size: 22px; margin-bottom: 10px; }
+.kpi-label { font-size: 12.5px; color: var(--color-text-light); font-weight: 600; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
+.kpi-value { font-size: 30px; font-weight: 800; color: var(--color-text); font-variant-numeric: tabular-nums; margin-bottom: 4px; }
+.kpi-foot { font-size: 12.5px; color: var(--color-text-muted); font-weight: 500; }
+
+/* CHARTS GRID */
+.charts-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; margin-bottom: 24px; }
+.chart-card { background: var(--color-card-bg); padding: 22px 24px; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid var(--color-border); }
+.chart-card.col-12 { grid-column: span 12; }
+.chart-card.col-7 { grid-column: span 7; }
+.chart-card.col-6 { grid-column: span 6; }
+.chart-card.col-5 { grid-column: span 5; }
+.chart-card.col-4 { grid-column: span 4; }
+@media (max-width: 1024px) { .chart-card { grid-column: span 12 !important; } }
+
+.chart-title { font-size: 15.5px; font-weight: 700; margin-bottom: 2px; color: var(--color-text); display: flex; align-items: center; gap: 8px; }
+.chart-subtitle { font-size: 12px; color: var(--color-text-muted); margin-bottom: 14px; }
+.chart-container { position: relative; height: 300px; }
+.chart-container.tall { height: 360px; }
+.chart-container.short { height: 250px; }
+
+/* TABLE */
+.table-card { background: var(--color-card-bg); padding: 24px; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid var(--color-border); margin-bottom: 24px; }
+.gridjs-wrapper { border-radius: 10px !important; }
+.gridjs-th { background-color: #FDF2F8 !important; color: var(--color-text) !important; font-weight: 700 !important; font-size: 12.5px !important; }
+.gridjs-td { font-size: 13px !important; }
+.gridjs-footer { border-radius: 0 0 10px 10px !important; }
+
+/* badges for sig/non-sig */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+.badge-sig { background: #DCFCE7; color: #15803D; }
+.badge-nosig { background: #F1F5F9; color: #64748B; }
+
+.empty-state { text-align: center; padding: 50px 20px; color: var(--color-text-light); }
+.empty-state-icon { font-size: 44px; margin-bottom: 10px; }
+
+.dashboard-footer { text-align: center; padding: 22px; color: var(--color-text-muted); font-size: 12.5px; margin-top: 8px; border-top: 1px solid var(--color-border); }
+
+.toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 10px; background: #1E1324; color: white; font-size: 13.5px; font-weight: 600; box-shadow: 0 10px 20px rgba(0,0,0,0.25); z-index: 9999; }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+</style>
+</head>
+<body>
+
+<div class="dashboard-container">
+
+  <header class="dashboard-header">
+    <div>
+      <h1 class="dashboard-title">💄 Dashboard Khảo Sát Hành Vi Tiêu Dùng — Sản Phẩm Chăm Sóc Cá Nhân</h1>
+      <p class="dashboard-subtitle">Phân tích các yếu tố ảnh hưởng đến ý định mua &amp; dữ liệu phục vụ hồi quy tuyến tính</p>
+      <span class="header-badge">📅 Tạo ngày 19/06/2026 &nbsp;•&nbsp; 200 phản hồi khảo sát</span>
+    </div>
+    <div class="flex gap-2">
+      <button class="btn btn-light" onclick="window.print()">🖨️ In dashboard</button>
+    </div>
+  </header>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <span class="filter-label">Bộ lọc:</span>
+    <select id="filterGender">
+      <option value="all">Tất cả giới tính</option>
+    </select>
+    <select id="filterResidence">
+      <option value="all">Tất cả nơi ở</option>
+    </select>
+    <select id="filterAge">
+      <option value="all">Tất cả độ tuổi</option>
+      <option value="18-24">18 - 24 tuổi</option>
+      <option value="25-31">25 - 31 tuổi</option>
+      <option value="32-38">32 - 38 tuổi</option>
+      <option value="39-45">39 - 45 tuổi</option>
+    </select>
+    <input type="search" id="searchInput" placeholder="🔍 Tìm trong bảng dữ liệu...">
+    <button class="btn btn-secondary" onclick="resetFilters()">↺ Reset</button>
+  </div>
+
+  <div id="filterChips" class="filter-chips"></div>
+
+  <!-- INSIGHTS -->
+  <div class="insight-box">
+    <div class="insight-box-title">💡 Insight tự động</div>
+    <ul id="insightList" class="insight-list"></ul>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div id="kpiGrid" class="kpi-grid"></div>
+
+  <!-- CHARTS -->
+  <div class="charts-grid">
+
+    <div class="chart-card col-7">
+      <h3 class="chart-title">📈 Mức độ ảnh hưởng đến Ý định tiếp tục mua</h3>
+      <p class="chart-subtitle">Hệ số hồi quy chuẩn hóa (β) — tính trên toàn bộ 200 quan sát, không đổi theo bộ lọc</p>
+      <div class="chart-container tall"><canvas id="chartRegression"></canvas></div>
+    </div>
+    <div class="chart-card col-5">
+      <h3 class="chart-title">🚻 Cơ cấu giới tính</h3>
+      <p class="chart-subtitle">Bấm vào lát để lọc theo giới tính</p>
+      <div class="chart-container tall"><canvas id="chartGender"></canvas></div>
+    </div>
+
+    <div class="chart-card col-4">
+      <h3 class="chart-title">🏘️ Cơ cấu nơi ở</h3>
+      <p class="chart-subtitle">Bấm để lọc theo khu vực</p>
+      <div class="chart-container short"><canvas id="chartResidence"></canvas></div>
+    </div>
+    <div class="chart-card col-4">
+      <h3 class="chart-title">🎂 Phân bố độ tuổi</h3>
+      <p class="chart-subtitle">Bấm cột để lọc theo nhóm tuổi</p>
+      <div class="chart-container short"><canvas id="chartAge"></canvas></div>
+    </div>
+    <div class="chart-card col-4">
+      <h3 class="chart-title">🎯 Phân bố điểm Ý định mua (Q10)</h3>
+      <p class="chart-subtitle">Thang điểm 1 (rất không đồng ý) - 5 (hoàn toàn đồng ý)</p>
+      <div class="chart-container short"><canvas id="chartQ10"></canvas></div>
+    </div>
+
+    <div class="chart-card col-6">
+      <h3 class="chart-title">🔥 Ma trận tương quan Q1 - Q10</h3>
+      <p class="chart-subtitle">Hệ số tương quan Pearson — cập nhật theo bộ lọc hiện tại</p>
+      <div class="chart-container tall" id="chartHeatmap"></div>
+    </div>
+    <div class="chart-card col-6">
+      <h3 class="chart-title">🕸️ So sánh điểm trung bình theo giới tính</h3>
+      <p class="chart-subtitle">Điểm trung bình từng yếu tố (Q1–Q9) — tính trên toàn bộ 200 quan sát</p>
+      <div class="chart-container tall" id="chartRadar"></div>
+    </div>
+
+  </div>
+
+  <!-- DATA TABLE -->
+  <div class="table-card">
+    <h3 class="chart-title">📋 Bảng dữ liệu chi tiết</h3>
+    <p class="chart-subtitle">Tìm kiếm, sắp xếp theo từng cột — phục vụ kiểm tra và xuất dữ liệu hồi quy</p>
+    <div id="dataTable"></div>
+  </div>
+
+  <footer class="dashboard-footer">
+    Dashboard tạo từ dữ liệu khảo sát sản phẩm chăm sóc cá nhân • <span id="generatedDate"></span> • <span id="dataInfo"></span>
+  </footer>
+
+</div>
+
+<script>
+const RAW_DATA = [{"stt": 1, "tuoi": 24, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 3, "Q2": 5, "Q3": 3, "Q4": 2, "Q5": 4, "Q6": 4, "Q7": 4, "Q8": 3, "Q9": 3, "Q10": 4}, {"stt": 2, "tuoi": 37, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 5, "Q3": 2, "Q4": 4, "Q5": 5, "Q6": 3, "Q7": 4, "Q8": 2, "Q9": 4, "Q10": 5}, {"stt": 3, "tuoi": 32, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 2, "Q4": 4, "Q5": 5, "Q6": 3, "Q7": 4, "Q8": 5, "Q9": 4, "Q10": 5}, {"stt": 4, "tuoi": 28, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 4, "Q3": 3, "Q4": 4, "Q5": 4, "Q6": 3, "Q7": 3, "Q8": 4, "Q9": 2, "Q10": 4}, {"stt": 5, "tuoi": 25, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 2, "Q4": 3, "Q5": 3, "Q6": 3, "Q7": 2, "Q8": 4, "Q9": 4, "Q10": 4}, {"stt": 6, "tuoi": 38, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 2, "Q2": 4, "Q3": 4, "Q4": 2, "Q5": 4, "Q6": 2, "Q7": 4, "Q8": 3, "Q9": 3, "Q10": 3}, {"stt": 7, "tuoi": 24, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 4, "Q2": 4, "Q3": 3, "Q4": 4, "Q5": 3, "Q6": 5, "Q7": 5, "Q8": 4, "Q9": 3, "Q10": 4}, {"stt": 8, "tuoi": 43, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 4, "Q2": 3, "Q3": 3, "Q4": 4, "Q5": 3, "Q6": 3, "Q7": 3, "Q8": 4, "Q9": 3, "Q10": 5}, {"stt": 9, "tuoi": 36, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 1, "Q2": 2, "Q3": 4, "Q4": 4, "Q5": 4, "Q6": 1, "Q7": 3, "Q8": 3, "Q9": 4, "Q10": 3}, {"stt": 10, "tuoi": 40, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 2, "Q2": 4, "Q3": 1, "Q4": 3, "Q5": 5, "Q6": 2, "Q7": 2, "Q8": 4, "Q9": 2, "Q10": 2}, {"stt": 11, "tuoi": 28, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 3, "Q2": 4, "Q3": 3, "Q4": 4, "Q5": 3, "Q6": 3, "Q7": 4, "Q8": 3, "Q9": 5, "Q10": 5}, {"stt": 12, "tuoi": 28, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 4, "Q3": 5, "Q4": 2, "Q5": 4, "Q6": 4, "Q7": 1, "Q8": 2, "Q9": 3, "Q10": 4}, {"stt": 13, "tuoi": 41, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 4, "Q3": 4, "Q4": 2, "Q5": 3, "Q6": 2, "Q7": 4, "Q8": 3, "Q9": 3, "Q10": 5}, {"stt": 14, "tuoi": 38, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 4, "Q2": 2, "Q3": 3, "Q4": 2, "Q5": 4, "Q6": 2, "Q7": 4, "Q8": 5, "Q9": 3, "Q10": 4}, {"stt": 15, "tuoi": 21, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 5, "Q2": 3, "Q3": 1, "Q4": 4, "Q5": 4, "Q6": 3, "Q7": 4, "Q8": 3, "Q9": 5, "Q10": 5}, {"stt": 16, "tuoi": 25, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 5, "Q2": 4, "Q3": 4, "Q4": 3, "Q5": 3, "Q6": 2, "Q7": 4, "Q8": 2, "Q9": 2, "Q10": 5}, {"stt": 17, "tuoi": 41, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 2, "Q2": 5, "Q3": 3, "Q4": 3, "Q5": 4, "Q6": 3, "Q7": 2, "Q8": 3, "Q9": 5, "Q10": 4}, {"stt": 18, "tuoi": 20, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 1, "Q2": 4, "Q3": 3, "Q4": 3, "Q5": 4, "Q6": 5, "Q7": 2, "Q8": 2, "Q9": 2, "Q10": 3}, {"stt": 19, "tuoi": 39, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 2, "Q2": 1, "Q3": 4, "Q4": 3, "Q5": 4, "Q6": 3, "Q7": 3, "Q8": 4, "Q9": 5, "Q10": 4}, {"stt": 20, "tuoi": 38, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 1, "Q4": 3, "Q5": 4, "Q6": 2, "Q7": 4, "Q8": 3, "Q9": 2, "Q10": 4}, {"stt": 21, "tuoi": 19, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 5, "Q2": 2, "Q3": 3, "Q4": 2, "Q5": 5, "Q6": 2, "Q7": 3, "Q8": 3, "Q9": 4, "Q10": 5}, {"stt": 22, "tuoi": 41, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 5, "Q2": 3, "Q3": 2, "Q4": 3, "Q5": 4, "Q6": 4, "Q7": 4, "Q8": 3, "Q9": 3, "Q10": 5}, {"stt": 23, "tuoi": 29, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 2, "Q2": 3, "Q3": 4, "Q4": 3, "Q5": 3, "Q6": 3, "Q7": 3, "Q8": 3, "Q9": 4, "Q10": 4}, {"stt": 24, "tuoi": 23, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 3, "Q2": 4, "Q3": 3, "Q4": 2, "Q5": 2, "Q6": 4, "Q7": 5, "Q8": 2, "Q9": 1, "Q10": 4}, {"stt": 25, "tuoi": 19, "gioiTinh": "Khác", "noiO": "Thành thị", "Q1": 5, "Q2": 3, "Q3": 1, "Q4": 1, "Q5": 3, "Q6": 4, "Q7": 3, "Q8": 4, "Q9": 3, "Q10": 3}, {"stt": 26, "tuoi": 45, "gioiTinh": "Khác", "noiO": "Thành thị", "Q1": 5, "Q2": 1, "Q3": 1, "Q4": 3, "Q5": 4, "Q6": 4, "Q7": 3, "Q8": 3, "Q9": 4, "Q10": 4}, {"stt": 27, "tuoi": 38, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 4, "Q2": 2, "Q3": 3, "Q4": 3, "Q5": 2, "Q6": 3, "Q7": 3, "Q8": 5, "Q9": 3, "Q10": 4}, {"stt": 28, "tuoi": 18, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 5, "Q2": 5, "Q3": 4, "Q4": 3, "Q5": 2, "Q6": 3, "Q7": 1, "Q8": 3, "Q9": 3, "Q10": 5}, {"stt": 29, "tuoi": 29, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 4, "Q4": 3, "Q5": 3, "Q6": 3, "Q7": 3, "Q8": 1, "Q9": 4, "Q10": 5}, {"stt": 30, "tuoi": 43, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 5, "Q2": 4, "Q3": 4, "Q4": 4, "Q5": 2, "Q6": 3, "Q7": 4, "Q8": 3, "Q9": 5, "Q10": 5}, {"stt": 31, "tuoi": 39, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 5, "Q2": 5, "Q3": 3, "Q4": 5, "Q5": 4, "Q6": 3, "Q7": 5, "Q8": 3, "Q9": 2, "Q10": 5}, {"stt": 32, "tuoi": 29, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 3, "Q2": 4, "Q3": 2, "Q4": 2, "Q5": 3, "Q6": 3, "Q7": 3, "Q8": 3, "Q9": 3, "Q10": 5}, {"stt": 33, "tuoi": 42, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 2, "Q2": 3, "Q3": 2, "Q4": 3, "Q5": 3, "Q6": 3, "Q7": 4, "Q8": 2, "Q9": 4, "Q10": 3}, {"stt": 34, "tuoi": 34, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 2, "Q2": 3, "Q3": 2, "Q4": 2, "Q5": 4, "Q6": 3, "Q7": 5, "Q8": 3, "Q9": 1, "Q10": 5}, {"stt": 35, "tuoi": 44, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 3, "Q2": 3, "Q3": 2, "Q4": 4, "Q5": 4, "Q6": 2, "Q7": 2, "Q8": 5, "Q9": 4, "Q10": 5}, {"stt": 36, "tuoi": 44, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 2, "Q2": 3, "Q3": 4, "Q4": 3, "Q5": 2, "Q6": 4, "Q7": 4, "Q8": 4, "Q9": 5, "Q10": 5}, {"stt": 37, "tuoi": 27, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 3, "Q2": 1, "Q3": 2, "Q4": 3, "Q5": 4, "Q6": 4, "Q7": 3, "Q8": 4, "Q9": 3, "Q10": 3}, {"stt": 38, "tuoi": 45, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 3, "Q2": 5, "Q3": 1, "Q4": 3, "Q5": 3, "Q6": 4, "Q7": 3, "Q8": 4, "Q9": 4, "Q10": 3}, {"stt": 39, "tuoi": 45, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 1, "Q2": 4, "Q3": 5, "Q4": 2, "Q5": 4, "Q6": 2, "Q7": 5, "Q8": 2, "Q9": 2, "Q10": 5}, {"stt": 40, "tuoi": 33, "gioiTinh": "Khác", "noiO": "Thành thị", "Q1": 4, "Q2": 4, "Q3": 2, "Q4": 4, "Q5": 3, "Q6": 4, "Q7": 3, "Q8": 4, "Q9": 2, "Q10": 4}, {"stt": 41, "tuoi": 32, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 4, "Q2": 4, "Q3": 5, "Q4": 3, "Q5": 5, "Q6": 3, "Q7": 3, "Q8": 3, "Q9": 5, "Q10": 5}, {"stt": 42, "tuoi": 32, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 4, "Q4": 3, "Q5": 2, "Q6": 3, "Q7": 4, "Q8": 3, "Q9": 4, "Q10": 5}, {"stt": 43, "tuoi": 36, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 2, "Q2": 4, "Q3": 2, "Q4": 2, "Q5": 4, "Q6": 2, "Q7": 1, "Q8": 2, "Q9": 3, "Q10": 3}, {"stt": 44, "tuoi": 29, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 2, "Q2": 4, "Q3": 3, "Q4": 5, "Q5": 4, "Q6": 1, "Q7": 3, "Q8": 4, "Q9": 3, "Q10": 2}, {"stt": 45, "tuoi": 40, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 4, "Q4": 3, "Q5": 2, "Q6": 4, "Q7": 3, "Q8": 5, "Q9": 1, "Q10": 3}, {"stt": 46, "tuoi": 37, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 5, "Q2": 4, "Q3": 4, "Q4": 5, "Q5": 4, "Q6": 4, "Q7": 5, "Q8": 3, "Q9": 5, "Q10": 5}, {"stt": 47, "tuoi": 42, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 5, "Q2": 5, "Q3": 5, "Q4": 3, "Q5": 2, "Q6": 3, "Q7": 3, "Q8": 2, "Q9": 2, "Q10": 4}, {"stt": 48, "tuoi": 20, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 1, "Q4": 3, "Q5": 3, "Q6": 2, "Q7": 5, "Q8": 3, "Q9": 2, "Q10": 5}, {"stt": 49, "tuoi": 22, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 4, "Q2": 5, "Q3": 3, "Q4": 4, "Q5": 3, "Q6": 3, "Q7": 3, "Q8": 4, "Q9": 2, "Q10": 4}, {"stt": 50, "tuoi": 36, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 4, "Q2": 1, "Q3": 4, "Q4": 3, "Q5": 4, "Q6": 3, "Q7": 4, "Q8": 1, "Q9": 2, "Q10": 3}, {"stt": 51, "tuoi": 24, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 4, "Q2": 2, "Q3": 3, "Q4": 5, "Q5": 2, "Q6": 2, "Q7": 4, "Q8": 2, "Q9": 2, "Q10": 4}, {"stt": 52, "tuoi": 38, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 2, "Q2": 4, "Q3": 3, "Q4": 2, "Q5": 4, "Q6": 3, "Q7": 4, "Q8": 3, "Q9": 3, "Q10": 3}, {"stt": 53, "tuoi": 26, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 2, "Q2": 5, "Q3": 4, "Q4": 2, "Q5": 4, "Q6": 3, "Q7": 4, "Q8": 4, "Q9": 2, "Q10": 5}, {"stt": 54, "tuoi": 24, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 4, "Q2": 3, "Q3": 4, "Q4": 1, "Q5": 3, "Q6": 4, "Q7": 1, "Q8": 4, "Q9": 4, "Q10": 5}, {"stt": 55, "tuoi": 35, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 4, "Q2": 3, "Q3": 2, "Q4": 3, "Q5": 4, "Q6": 4, "Q7": 5, "Q8": 3, "Q9": 5, "Q10": 5}, {"stt": 56, "tuoi": 21, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 2, "Q2": 3, "Q3": 2, "Q4": 2, "Q5": 4, "Q6": 2, "Q7": 5, "Q8": 3, "Q9": 3, "Q10": 3}, {"stt": 57, "tuoi": 42, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 3, "Q2": 2, "Q3": 5, "Q4": 3, "Q5": 2, "Q6": 3, "Q7": 4, "Q8": 4, "Q9": 4, "Q10": 4}, {"stt": 58, "tuoi": 45, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 2, "Q4": 2, "Q5": 4, "Q6": 3, "Q7": 2, "Q8": 2, "Q9": 4, "Q10": 5}, {"stt": 59, "tuoi": 31, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 3, "Q2": 3, "Q3": 4, "Q4": 3, "Q5": 3, "Q6": 4, "Q7": 2, "Q8": 4, "Q9": 3, "Q10": 5}, {"stt": 60, "tuoi": 35, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 4, "Q2": 2, "Q3": 5, "Q4": 3, "Q5": 3, "Q6": 4, "Q7": 4, "Q8": 4, "Q9": 2, "Q10": 5}, {"stt": 61, "tuoi": 43, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 4, "Q2": 4, "Q3": 3, "Q4": 3, "Q5": 3, "Q6": 5, "Q7": 1, "Q8": 4, "Q9": 5, "Q10": 4}, {"stt": 62, "tuoi": 26, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 2, "Q2": 4, "Q3": 4, "Q4": 4, "Q5": 4, "Q6": 3, "Q7": 3, "Q8": 3, "Q9": 5, "Q10": 5}, {"stt": 63, "tuoi": 43, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 5, "Q2": 4, "Q3": 3, "Q4": 4, "Q5": 4, "Q6": 5, "Q7": 4, "Q8": 4, "Q9": 3, "Q10": 5}, {"stt": 64, "tuoi": 38, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 3, "Q2": 1, "Q3": 4, "Q4": 3, "Q5": 3, "Q6": 3, "Q7": 4, "Q8": 5, "Q9": 4, "Q10": 4}, {"stt": 65, "tuoi": 19, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 5, "Q2": 2, "Q3": 5, "Q4": 3, "Q5": 3, "Q6": 4, "Q7": 1, "Q8": 3, "Q9": 3, "Q10": 4}, {"stt": 66, "tuoi": 37, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 4, "Q2": 4, "Q3": 4, "Q4": 5, "Q5": 4, "Q6": 3, "Q7": 4, "Q8": 4, "Q9": 3, "Q10": 5}, {"stt": 67, "tuoi": 45, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 1, "Q2": 3, "Q3": 2, "Q4": 5, "Q5": 3, "Q6": 4, "Q7": 1, "Q8": 3, "Q9": 3, "Q10": 2}, {"stt": 68, "tuoi": 32, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 3, "Q2": 3, "Q3": 2, "Q4": 3, "Q5": 2, "Q6": 3, "Q7": 3, "Q8": 3, "Q9": 3, "Q10": 4}, {"stt": 69, "tuoi": 45, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 3, "Q2": 4, "Q3": 1, "Q4": 3, "Q5": 3, "Q6": 3, "Q7": 4, "Q8": 2, "Q9": 3, "Q10": 3}, {"stt": 70, "tuoi": 24, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 4, "Q2": 3, "Q3": 3, "Q4": 3, "Q5": 4, "Q6": 4, "Q7": 3, "Q8": 3, "Q9": 3, "Q10": 5}, {"stt": 71, "tuoi": 29, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 4, "Q2": 3, "Q3": 4, "Q4": 3, "Q5": 2, "Q6": 4, "Q7": 4, "Q8": 3, "Q9": 5, "Q10": 5}, {"stt": 72, "tuoi": 25, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 2, "Q2": 3, "Q3": 3, "Q4": 4, "Q5": 3, "Q6": 4, "Q7": 4, "Q8": 4, "Q9": 4, "Q10": 1}, {"stt": 73, "tuoi": 32, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 1, "Q4": 2, "Q5": 4, "Q6": 4, "Q7": 4, "Q8": 2, "Q9": 4, "Q10": 4}, {"stt": 74, "tuoi": 20, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 4, "Q2": 5, "Q3": 3, "Q4": 2, "Q5": 3, "Q6": 3, "Q7": 2, "Q8": 5, "Q9": 1, "Q10": 4}, {"stt": 75, "tuoi": 31, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 3, "Q2": 2, "Q3": 2, "Q4": 4, "Q5": 4, "Q6": 3, "Q7": 3, "Q8": 3, "Q9": 3, "Q10": 3}, {"stt": 76, "tuoi": 34, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 4, "Q2": 3, "Q3": 3, "Q4": 1, "Q5": 3, "Q6": 2, "Q7": 2, "Q8": 4, "Q9": 1, "Q10": 4}, {"stt": 77, "tuoi": 21, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 5, "Q2": 5, "Q3": 1, "Q4": 2, "Q5": 3, "Q6": 5, "Q7": 1, "Q8": 1, "Q9": 3, "Q10": 3}, {"stt": 78, "tuoi": 35, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 2, "Q2": 2, "Q3": 3, "Q4": 2, "Q5": 3, "Q6": 1, "Q7": 3, "Q8": 3, "Q9": 5, "Q10": 4}, {"stt": 79, "tuoi": 25, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 4, "Q2": 5, "Q3": 3, "Q4": 3, "Q5": 5, "Q6": 4, "Q7": 3, "Q8": 4, "Q9": 4, "Q10": 4}, {"stt": 80, "tuoi": 21, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 3, "Q2": 1, "Q3": 5, "Q4": 3, "Q5": 2, "Q6": 2, "Q7": 4, "Q8": 4, "Q9": 4, "Q10": 5}, {"stt": 81, "tuoi": 19, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 3, "Q2": 1, "Q3": 4, "Q4": 3, "Q5": 1, "Q6": 3, "Q7": 4, "Q8": 2, "Q9": 2, "Q10": 4}, {"stt": 82, "tuoi": 23, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 1, "Q2": 3, "Q3": 1, "Q4": 4, "Q5": 4, "Q6": 3, "Q7": 2, "Q8": 5, "Q9": 1, "Q10": 3}, {"stt": 83, "tuoi": 39, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 5, "Q2": 2, "Q3": 1, "Q4": 2, "Q5": 2, "Q6": 4, "Q7": 3, "Q8": 3, "Q9": 3, "Q10": 4}, {"stt": 84, "tuoi": 27, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 4, "Q2": 4, "Q3": 3, "Q4": 4, "Q5": 3, "Q6": 2, "Q7": 4, "Q8": 3, "Q9": 3, "Q10": 4}, {"stt": 85, "tuoi": 21, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 2, "Q2": 5, "Q3": 3, "Q4": 2, "Q5": 4, "Q6": 5, "Q7": 4, "Q8": 3, "Q9": 5, "Q10": 5}, {"stt": 86, "tuoi": 39, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 1, "Q2": 3, "Q3": 3, "Q4": 2, "Q5": 4, "Q6": 2, "Q7": 5, "Q8": 3, "Q9": 4, "Q10": 4}, {"stt": 87, "tuoi": 35, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 4, "Q2": 3, "Q3": 3, "Q4": 5, "Q5": 4, "Q6": 4, "Q7": 4, "Q8": 3, "Q9": 2, "Q10": 5}, {"stt": 88, "tuoi": 43, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 3, "Q2": 2, "Q3": 5, "Q4": 4, "Q5": 5, "Q6": 3, "Q7": 2, "Q8": 5, "Q9": 3, "Q10": 3}, {"stt": 89, "tuoi": 29, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 2, "Q2": 4, "Q3": 3, "Q4": 3, "Q5": 4, "Q6": 3, "Q7": 4, "Q8": 2, "Q9": 3, "Q10": 4}, {"stt": 90, "tuoi": 19, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 3, "Q4": 3, "Q5": 3, "Q6": 3, "Q7": 5, "Q8": 3, "Q9": 3, "Q10": 5}, {"stt": 91, "tuoi": 27, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 2, "Q2": 3, "Q3": 5, "Q4": 4, "Q5": 5, "Q6": 4, "Q7": 2, "Q8": 4, "Q9": 4, "Q10": 4}, {"stt": 92, "tuoi": 21, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 3, "Q2": 1, "Q3": 3, "Q4": 3, "Q5": 4, "Q6": 4, "Q7": 3, "Q8": 2, "Q9": 3, "Q10": 5}, {"stt": 93, "tuoi": 31, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 4, "Q2": 3, "Q3": 3, "Q4": 3, "Q5": 4, "Q6": 4, "Q7": 2, "Q8": 2, "Q9": 3, "Q10": 5}, {"stt": 94, "tuoi": 33, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 1, "Q2": 3, "Q3": 5, "Q4": 4, "Q5": 3, "Q6": 2, "Q7": 3, "Q8": 3, "Q9": 2, "Q10": 3}, {"stt": 95, "tuoi": 32, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 3, "Q2": 4, "Q3": 4, "Q4": 5, "Q5": 3, "Q6": 3, "Q7": 5, "Q8": 2, "Q9": 5, "Q10": 5}, {"stt": 96, "tuoi": 25, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 3, "Q4": 4, "Q5": 3, "Q6": 2, "Q7": 3, "Q8": 2, "Q9": 3, "Q10": 3}, {"stt": 97, "tuoi": 31, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 2, "Q2": 2, "Q3": 3, "Q4": 3, "Q5": 3, "Q6": 2, "Q7": 4, "Q8": 3, "Q9": 4, "Q10": 4}, {"stt": 98, "tuoi": 40, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 4, "Q2": 2, "Q3": 2, "Q4": 3, "Q5": 4, "Q6": 4, "Q7": 3, "Q8": 4, "Q9": 4, "Q10": 3}, {"stt": 99, "tuoi": 45, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 4, "Q2": 3, "Q3": 3, "Q4": 4, "Q5": 3, "Q6": 3, "Q7": 3, "Q8": 2, "Q9": 3, "Q10": 4}, {"stt": 100, "tuoi": 42, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 2, "Q2": 1, "Q3": 3, "Q4": 4, "Q5": 3, "Q6": 2, "Q7": 4, "Q8": 3, "Q9": 3, "Q10": 5}, {"stt": 101, "tuoi": 25, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 3, "Q2": 4, "Q3": 3, "Q4": 2, "Q5": 2, "Q6": 5, "Q7": 3, "Q8": 2, "Q9": 2, "Q10": 4}, {"stt": 102, "tuoi": 38, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 2, "Q2": 3, "Q3": 4, "Q4": 3, "Q5": 3, "Q6": 3, "Q7": 4, "Q8": 4, "Q9": 5, "Q10": 5}, {"stt": 103, "tuoi": 33, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 4, "Q2": 2, "Q3": 2, "Q4": 5, "Q5": 5, "Q6": 2, "Q7": 3, "Q8": 3, "Q9": 2, "Q10": 4}, {"stt": 104, "tuoi": 30, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 3, "Q2": 4, "Q3": 3, "Q4": 3, "Q5": 3, "Q6": 3, "Q7": 2, "Q8": 4, "Q9": 5, "Q10": 5}, {"stt": 105, "tuoi": 35, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 5, "Q2": 4, "Q3": 2, "Q4": 3, "Q5": 3, "Q6": 3, "Q7": 4, "Q8": 2, "Q9": 3, "Q10": 5}, {"stt": 106, "tuoi": 32, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 4, "Q2": 3, "Q3": 2, "Q4": 2, "Q5": 4, "Q6": 4, "Q7": 4, "Q8": 3, "Q9": 4, "Q10": 4}, {"stt": 107, "tuoi": 38, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 3, "Q2": 3, "Q3": 3, "Q4": 1, "Q5": 3, "Q6": 3, "Q7": 1, "Q8": 3, "Q9": 3, "Q10": 4}, {"stt": 108, "tuoi": 41, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 3, "Q2": 4, "Q3": 3, "Q4": 3, "Q5": 3, "Q6": 2, "Q7": 5, "Q8": 2, "Q9": 4, "Q10": 5}, {"stt": 109, "tuoi": 43, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 5, "Q2": 5, "Q3": 4, "Q4": 3, "Q5": 4, "Q6": 3, "Q7": 4, "Q8": 1, "Q9": 2, "Q10": 5}, {"stt": 110, "tuoi": 42, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 5, "Q2": 2, "Q3": 3, "Q4": 4, "Q5": 4, "Q6": 3, "Q7": 3, "Q8": 5, "Q9": 2, "Q10": 4}, {"stt": 111, "tuoi": 45, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 4, "Q2": 4, "Q3": 3, "Q4": 3, "Q5": 3, "Q6": 4, "Q7": 2, "Q8": 4, "Q9": 2, "Q10": 3}, {"stt": 112, "tuoi": 45, "gioiTinh": "Khác", "noiO": "Thành thị", "Q1": 5, "Q2": 1, "Q3": 2, "Q4": 3, "Q5": 4, "Q6": 2, "Q7": 4, "Q8": 3, "Q9": 5, "Q10": 5}, {"stt": 113, "tuoi": 45, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 2, "Q2": 1, "Q3": 4, "Q4": 4, "Q5": 3, "Q6": 2, "Q7": 4, "Q8": 4, "Q9": 3, "Q10": 4}, {"stt": 114, "tuoi": 30, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 5, "Q3": 1, "Q4": 3, "Q5": 2, "Q6": 4, "Q7": 4, "Q8": 2, "Q9": 1, "Q10": 5}, {"stt": 115, "tuoi": 26, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 4, "Q2": 2, "Q3": 4, "Q4": 3, "Q5": 4, "Q6": 3, "Q7": 5, "Q8": 2, "Q9": 3, "Q10": 5}, {"stt": 116, "tuoi": 32, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 2, "Q4": 3, "Q5": 4, "Q6": 3, "Q7": 2, "Q8": 5, "Q9": 4, "Q10": 5}, {"stt": 117, "tuoi": 30, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 2, "Q2": 5, "Q3": 5, "Q4": 3, "Q5": 2, "Q6": 2, "Q7": 5, "Q8": 3, "Q9": 5, "Q10": 4}, {"stt": 118, "tuoi": 18, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 4, "Q2": 2, "Q3": 2, "Q4": 4, "Q5": 4, "Q6": 4, "Q7": 2, "Q8": 2, "Q9": 4, "Q10": 4}, {"stt": 119, "tuoi": 42, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 4, "Q2": 2, "Q3": 3, "Q4": 2, "Q5": 4, "Q6": 4, "Q7": 3, "Q8": 2, "Q9": 2, "Q10": 4}, {"stt": 120, "tuoi": 24, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 4, "Q2": 2, "Q3": 5, "Q4": 2, "Q5": 3, "Q6": 3, "Q7": 4, "Q8": 4, "Q9": 4, "Q10": 5}, {"stt": 121, "tuoi": 26, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 1, "Q2": 5, "Q3": 2, "Q4": 5, "Q5": 2, "Q6": 3, "Q7": 5, "Q8": 4, "Q9": 2, "Q10": 3}, {"stt": 122, "tuoi": 41, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 4, "Q2": 1, "Q3": 2, "Q4": 4, "Q5": 4, "Q6": 3, "Q7": 4, "Q8": 1, "Q9": 2, "Q10": 4}, {"stt": 123, "tuoi": 18, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 2, "Q2": 2, "Q3": 2, "Q4": 4, "Q5": 3, "Q6": 2, "Q7": 3, "Q8": 3, "Q9": 3, "Q10": 3}, {"stt": 124, "tuoi": 29, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 2, "Q2": 3, "Q3": 3, "Q4": 3, "Q5": 5, "Q6": 3, "Q7": 4, "Q8": 3, "Q9": 3, "Q10": 3}, {"stt": 125, "tuoi": 25, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 2, "Q2": 3, "Q3": 2, "Q4": 1, "Q5": 4, "Q6": 2, "Q7": 3, "Q8": 4, "Q9": 4, "Q10": 4}, {"stt": 126, "tuoi": 41, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 4, "Q3": 4, "Q4": 4, "Q5": 3, "Q6": 3, "Q7": 5, "Q8": 3, "Q9": 3, "Q10": 4}, {"stt": 127, "tuoi": 28, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 3, "Q2": 3, "Q3": 4, "Q4": 3, "Q5": 3, "Q6": 3, "Q7": 2, "Q8": 1, "Q9": 3, "Q10": 4}, {"stt": 128, "tuoi": 36, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 2, "Q2": 5, "Q3": 2, "Q4": 3, "Q5": 5, "Q6": 3, "Q7": 5, "Q8": 3, "Q9": 3, "Q10": 5}, {"stt": 129, "tuoi": 34, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 1, "Q2": 4, "Q3": 3, "Q4": 3, "Q5": 4, "Q6": 2, "Q7": 3, "Q8": 4, "Q9": 1, "Q10": 3}, {"stt": 130, "tuoi": 25, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 4, "Q2": 4, "Q3": 2, "Q4": 4, "Q5": 3, "Q6": 3, "Q7": 4, "Q8": 3, "Q9": 4, "Q10": 5}, {"stt": 131, "tuoi": 20, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 5, "Q2": 1, "Q3": 3, "Q4": 2, "Q5": 2, "Q6": 4, "Q7": 1, "Q8": 3, "Q9": 3, "Q10": 4}, {"stt": 132, "tuoi": 20, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 2, "Q2": 1, "Q3": 3, "Q4": 4, "Q5": 5, "Q6": 3, "Q7": 4, "Q8": 3, "Q9": 3, "Q10": 2}, {"stt": 133, "tuoi": 18, "gioiTinh": "Khác", "noiO": "Nông thôn", "Q1": 3, "Q2": 2, "Q3": 4, "Q4": 4, "Q5": 2, "Q6": 2, "Q7": 4, "Q8": 3, "Q9": 4, "Q10": 5}, {"stt": 134, "tuoi": 44, "gioiTinh": "Khác", "noiO": "Thành thị", "Q1": 4, "Q2": 4, "Q3": 5, "Q4": 2, "Q5": 3, "Q6": 4, "Q7": 3, "Q8": 5, "Q9": 2, "Q10": 4}, {"stt": 135, "tuoi": 22, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 2, "Q3": 3, "Q4": 4, "Q5": 1, "Q6": 5, "Q7": 4, "Q8": 4, "Q9": 1, "Q10": 3}, {"stt": 136, "tuoi": 27, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 2, "Q2": 4, "Q3": 4, "Q4": 5, "Q5": 4, "Q6": 3, "Q7": 5, "Q8": 3, "Q9": 5, "Q10": 4}, {"stt": 137, "tuoi": 24, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 5, "Q2": 5, "Q3": 2, "Q4": 4, "Q5": 4, "Q6": 2, "Q7": 5, "Q8": 2, "Q9": 4, "Q10": 4}, {"stt": 138, "tuoi": 43, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 2, "Q2": 3, "Q3": 2, "Q4": 3, "Q5": 3, "Q6": 3, "Q7": 3, "Q8": 3, "Q9": 3, "Q10": 3}, {"stt": 139, "tuoi": 26, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 4, "Q2": 3, "Q3": 4, "Q4": 3, "Q5": 2, "Q6": 4, "Q7": 3, "Q8": 4, "Q9": 3, "Q10": 5}, {"stt": 140, "tuoi": 45, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 5, "Q2": 4, "Q3": 4, "Q4": 3, "Q5": 5, "Q6": 3, "Q7": 2, "Q8": 4, "Q9": 3, "Q10": 5}, {"stt": 141, "tuoi": 24, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 4, "Q3": 3, "Q4": 3, "Q5": 3, "Q6": 3, "Q7": 2, "Q8": 4, "Q9": 3, "Q10": 5}, {"stt": 142, "tuoi": 26, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 2, "Q2": 5, "Q3": 5, "Q4": 4, "Q5": 3, "Q6": 3, "Q7": 3, "Q8": 2, "Q9": 2, "Q10": 5}, {"stt": 143, "tuoi": 25, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 2, "Q2": 2, "Q3": 3, "Q4": 3, "Q5": 4, "Q6": 2, "Q7": 4, "Q8": 2, "Q9": 3, "Q10": 4}, {"stt": 144, "tuoi": 29, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 4, "Q3": 4, "Q4": 3, "Q5": 3, "Q6": 2, "Q7": 3, "Q8": 4, "Q9": 3, "Q10": 4}, {"stt": 145, "tuoi": 19, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 2, "Q2": 4, "Q3": 3, "Q4": 2, "Q5": 4, "Q6": 3, "Q7": 4, "Q8": 5, "Q9": 2, "Q10": 3}, {"stt": 146, "tuoi": 18, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 1, "Q2": 4, "Q3": 4, "Q4": 2, "Q5": 5, "Q6": 1, "Q7": 3, "Q8": 3, "Q9": 2, "Q10": 2}, {"stt": 147, "tuoi": 33, "gioiTinh": "Khác", "noiO": "Nông thôn", "Q1": 4, "Q2": 4, "Q3": 2, "Q4": 4, "Q5": 4, "Q6": 3, "Q7": 3, "Q8": 5, "Q9": 2, "Q10": 3}, {"stt": 148, "tuoi": 40, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 3, "Q2": 1, "Q3": 5, "Q4": 4, "Q5": 3, "Q6": 2, "Q7": 2, "Q8": 3, "Q9": 5, "Q10": 4}, {"stt": 149, "tuoi": 40, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 2, "Q2": 3, "Q3": 4, "Q4": 3, "Q5": 3, "Q6": 3, "Q7": 1, "Q8": 3, "Q9": 3, "Q10": 2}, {"stt": 150, "tuoi": 41, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 4, "Q2": 3, "Q3": 2, "Q4": 3, "Q5": 3, "Q6": 4, "Q7": 2, "Q8": 4, "Q9": 5, "Q10": 5}, {"stt": 151, "tuoi": 22, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 2, "Q2": 1, "Q3": 3, "Q4": 4, "Q5": 3, "Q6": 3, "Q7": 1, "Q8": 3, "Q9": 3, "Q10": 2}, {"stt": 152, "tuoi": 20, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 5, "Q2": 4, "Q3": 3, "Q4": 4, "Q5": 4, "Q6": 3, "Q7": 4, "Q8": 3, "Q9": 2, "Q10": 5}, {"stt": 153, "tuoi": 29, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 5, "Q2": 1, "Q3": 3, "Q4": 3, "Q5": 3, "Q6": 2, "Q7": 1, "Q8": 4, "Q9": 3, "Q10": 5}, {"stt": 154, "tuoi": 25, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 2, "Q2": 2, "Q3": 4, "Q4": 2, "Q5": 3, "Q6": 1, "Q7": 3, "Q8": 3, "Q9": 5, "Q10": 4}, {"stt": 155, "tuoi": 39, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 3, "Q2": 3, "Q3": 3, "Q4": 3, "Q5": 4, "Q6": 5, "Q7": 2, "Q8": 4, "Q9": 3, "Q10": 3}, {"stt": 156, "tuoi": 44, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 2, "Q4": 3, "Q5": 3, "Q6": 3, "Q7": 3, "Q8": 1, "Q9": 2, "Q10": 3}, {"stt": 157, "tuoi": 20, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 1, "Q2": 5, "Q3": 4, "Q4": 4, "Q5": 2, "Q6": 4, "Q7": 5, "Q8": 2, "Q9": 5, "Q10": 5}, {"stt": 158, "tuoi": 18, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 4, "Q2": 1, "Q3": 3, "Q4": 2, "Q5": 3, "Q6": 2, "Q7": 2, "Q8": 3, "Q9": 3, "Q10": 4}, {"stt": 159, "tuoi": 20, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 5, "Q2": 5, "Q3": 4, "Q4": 4, "Q5": 3, "Q6": 4, "Q7": 5, "Q8": 3, "Q9": 3, "Q10": 5}, {"stt": 160, "tuoi": 22, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 5, "Q2": 4, "Q3": 1, "Q4": 3, "Q5": 3, "Q6": 2, "Q7": 4, "Q8": 4, "Q9": 4, "Q10": 5}, {"stt": 161, "tuoi": 32, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 3, "Q2": 4, "Q3": 5, "Q4": 2, "Q5": 3, "Q6": 3, "Q7": 1, "Q8": 3, "Q9": 3, "Q10": 3}, {"stt": 162, "tuoi": 31, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 5, "Q2": 4, "Q3": 4, "Q4": 4, "Q5": 3, "Q6": 3, "Q7": 3, "Q8": 3, "Q9": 2, "Q10": 5}, {"stt": 163, "tuoi": 20, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 2, "Q2": 4, "Q3": 5, "Q4": 3, "Q5": 2, "Q6": 3, "Q7": 5, "Q8": 4, "Q9": 5, "Q10": 3}, {"stt": 164, "tuoi": 18, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 2, "Q2": 1, "Q3": 3, "Q4": 4, "Q5": 3, "Q6": 3, "Q7": 4, "Q8": 2, "Q9": 4, "Q10": 5}, {"stt": 165, "tuoi": 22, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 4, "Q2": 3, "Q3": 3, "Q4": 5, "Q5": 2, "Q6": 3, "Q7": 1, "Q8": 3, "Q9": 3, "Q10": 4}, {"stt": 166, "tuoi": 43, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 3, "Q2": 2, "Q3": 5, "Q4": 2, "Q5": 3, "Q6": 2, "Q7": 4, "Q8": 2, "Q9": 3, "Q10": 4}, {"stt": 167, "tuoi": 40, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 3, "Q2": 1, "Q3": 5, "Q4": 3, "Q5": 2, "Q6": 4, "Q7": 1, "Q8": 4, "Q9": 4, "Q10": 5}, {"stt": 168, "tuoi": 31, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 4, "Q2": 4, "Q3": 3, "Q4": 3, "Q5": 3, "Q6": 3, "Q7": 2, "Q8": 3, "Q9": 1, "Q10": 4}, {"stt": 169, "tuoi": 24, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 3, "Q2": 3, "Q3": 2, "Q4": 3, "Q5": 2, "Q6": 4, "Q7": 4, "Q8": 3, "Q9": 2, "Q10": 3}, {"stt": 170, "tuoi": 44, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 4, "Q3": 4, "Q4": 3, "Q5": 4, "Q6": 4, "Q7": 1, "Q8": 4, "Q9": 3, "Q10": 4}, {"stt": 171, "tuoi": 26, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 2, "Q2": 4, "Q3": 5, "Q4": 4, "Q5": 2, "Q6": 3, "Q7": 5, "Q8": 3, "Q9": 1, "Q10": 4}, {"stt": 172, "tuoi": 32, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 3, "Q4": 4, "Q5": 3, "Q6": 4, "Q7": 4, "Q8": 2, "Q9": 5, "Q10": 5}, {"stt": 173, "tuoi": 32, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 5, "Q3": 4, "Q4": 2, "Q5": 3, "Q6": 4, "Q7": 4, "Q8": 2, "Q9": 3, "Q10": 3}, {"stt": 174, "tuoi": 43, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 4, "Q2": 5, "Q3": 3, "Q4": 3, "Q5": 3, "Q6": 3, "Q7": 3, "Q8": 3, "Q9": 4, "Q10": 5}, {"stt": 175, "tuoi": 27, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 3, "Q2": 1, "Q3": 3, "Q4": 4, "Q5": 4, "Q6": 4, "Q7": 4, "Q8": 2, "Q9": 4, "Q10": 4}, {"stt": 176, "tuoi": 45, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 4, "Q2": 2, "Q3": 4, "Q4": 3, "Q5": 3, "Q6": 2, "Q7": 4, "Q8": 3, "Q9": 4, "Q10": 4}, {"stt": 177, "tuoi": 30, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 1, "Q2": 5, "Q3": 1, "Q4": 3, "Q5": 3, "Q6": 2, "Q7": 2, "Q8": 2, "Q9": 1, "Q10": 1}, {"stt": 178, "tuoi": 36, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 3, "Q4": 2, "Q5": 3, "Q6": 3, "Q7": 4, "Q8": 3, "Q9": 3, "Q10": 5}, {"stt": 179, "tuoi": 24, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 2, "Q2": 3, "Q3": 4, "Q4": 4, "Q5": 4, "Q6": 4, "Q7": 3, "Q8": 2, "Q9": 1, "Q10": 3}, {"stt": 180, "tuoi": 34, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 3, "Q2": 4, "Q3": 4, "Q4": 1, "Q5": 3, "Q6": 4, "Q7": 3, "Q8": 3, "Q9": 1, "Q10": 5}, {"stt": 181, "tuoi": 37, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 2, "Q4": 2, "Q5": 2, "Q6": 4, "Q7": 3, "Q8": 4, "Q9": 3, "Q10": 2}, {"stt": 182, "tuoi": 21, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 4, "Q2": 3, "Q3": 3, "Q4": 3, "Q5": 3, "Q6": 4, "Q7": 2, "Q8": 3, "Q9": 4, "Q10": 5}, {"stt": 183, "tuoi": 22, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 3, "Q4": 4, "Q5": 4, "Q6": 2, "Q7": 4, "Q8": 3, "Q9": 4, "Q10": 5}, {"stt": 184, "tuoi": 40, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 1, "Q2": 4, "Q3": 3, "Q4": 2, "Q5": 3, "Q6": 2, "Q7": 3, "Q8": 4, "Q9": 2, "Q10": 2}, {"stt": 185, "tuoi": 24, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 4, "Q2": 3, "Q3": 5, "Q4": 3, "Q5": 3, "Q6": 2, "Q7": 1, "Q8": 4, "Q9": 1, "Q10": 5}, {"stt": 186, "tuoi": 30, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 2, "Q2": 4, "Q3": 3, "Q4": 5, "Q5": 2, "Q6": 5, "Q7": 3, "Q8": 4, "Q9": 4, "Q10": 4}, {"stt": 187, "tuoi": 32, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 2, "Q2": 3, "Q3": 4, "Q4": 2, "Q5": 2, "Q6": 2, "Q7": 4, "Q8": 5, "Q9": 3, "Q10": 5}, {"stt": 188, "tuoi": 28, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 2, "Q2": 4, "Q3": 2, "Q4": 2, "Q5": 4, "Q6": 3, "Q7": 3, "Q8": 3, "Q9": 3, "Q10": 5}, {"stt": 189, "tuoi": 21, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 2, "Q2": 4, "Q3": 4, "Q4": 2, "Q5": 2, "Q6": 4, "Q7": 2, "Q8": 3, "Q9": 5, "Q10": 5}, {"stt": 190, "tuoi": 30, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 4, "Q2": 2, "Q3": 5, "Q4": 2, "Q5": 4, "Q6": 3, "Q7": 2, "Q8": 2, "Q9": 4, "Q10": 5}, {"stt": 191, "tuoi": 24, "gioiTinh": "Khác", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 4, "Q4": 1, "Q5": 2, "Q6": 3, "Q7": 4, "Q8": 2, "Q9": 3, "Q10": 4}, {"stt": 192, "tuoi": 44, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 5, "Q2": 4, "Q3": 3, "Q4": 3, "Q5": 3, "Q6": 4, "Q7": 3, "Q8": 2, "Q9": 5, "Q10": 4}, {"stt": 193, "tuoi": 36, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 2, "Q2": 3, "Q3": 2, "Q4": 4, "Q5": 2, "Q6": 4, "Q7": 2, "Q8": 4, "Q9": 4, "Q10": 2}, {"stt": 194, "tuoi": 39, "gioiTinh": "Nữ", "noiO": "Nông thôn", "Q1": 4, "Q2": 4, "Q3": 3, "Q4": 2, "Q5": 3, "Q6": 4, "Q7": 3, "Q8": 1, "Q9": 3, "Q10": 5}, {"stt": 195, "tuoi": 45, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 3, "Q2": 5, "Q3": 5, "Q4": 4, "Q5": 3, "Q6": 3, "Q7": 5, "Q8": 4, "Q9": 2, "Q10": 5}, {"stt": 196, "tuoi": 19, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 3, "Q2": 3, "Q3": 3, "Q4": 3, "Q5": 1, "Q6": 3, "Q7": 4, "Q8": 3, "Q9": 3, "Q10": 4}, {"stt": 197, "tuoi": 27, "gioiTinh": "Nam", "noiO": "Thành thị", "Q1": 2, "Q2": 4, "Q3": 2, "Q4": 3, "Q5": 4, "Q6": 4, "Q7": 3, "Q8": 2, "Q9": 4, "Q10": 4}, {"stt": 198, "tuoi": 30, "gioiTinh": "Nam", "noiO": "Nông thôn", "Q1": 2, "Q2": 3, "Q3": 3, "Q4": 4, "Q5": 5, "Q6": 3, "Q7": 3, "Q8": 3, "Q9": 5, "Q10": 5}, {"stt": 199, "tuoi": 42, "gioiTinh": "Khác", "noiO": "Nông thôn", "Q1": 4, "Q2": 4, "Q3": 2, "Q4": 3, "Q5": 4, "Q6": 2, "Q7": 5, "Q8": 5, "Q9": 3, "Q10": 5}, {"stt": 200, "tuoi": 38, "gioiTinh": "Nữ", "noiO": "Thành thị", "Q1": 4, "Q2": 1, "Q3": 3, "Q4": 2, "Q5": 5, "Q6": 4, "Q7": 2, "Q8": 4, "Q9": 3, "Q10": 4}];
+const REG_RESULT = [{"q": "Q1", "label": "Chất lượng sản phẩm", "beta": 0.441, "p": 0.0, "sig": true}, {"q": "Q9", "label": "Khuyến mãi/giảm giá", "beta": 0.255, "p": 0.0, "sig": true}, {"q": "Q7", "label": "Thành phần tự nhiên", "beta": 0.231, "p": 0.0002, "sig": true}, {"q": "Q3", "label": "Thương hiệu uy tín", "beta": 0.22, "p": 0.0004, "sig": true}, {"q": "Q2", "label": "Giá cả hợp lý", "beta": 0.088, "p": 0.1477, "sig": false}, {"q": "Q4", "label": "Bao bì đẹp/tiện lợi", "beta": -0.073, "p": 0.2236, "sig": false}, {"q": "Q6", "label": "KOL / Người nổi tiếng", "beta": -0.028, "p": 0.6601, "sig": false}, {"q": "Q5", "label": "Quảng cáo", "beta": 0.027, "p": 0.6524, "sig": false}, {"q": "Q8", "label": "Giới thiệu bạn bè", "beta": -0.021, "p": 0.7203, "sig": false}];
+const Q_LABELS = {"Q1": "Chất lượng sản phẩm", "Q2": "Giá cả hợp lý", "Q3": "Thương hiệu uy tín", "Q4": "Bao bì đẹp/tiện lợi", "Q5": "Quảng cáo", "Q6": "KOL / Người nổi tiếng", "Q7": "Thành phần tự nhiên", "Q8": "Giới thiệu bạn bè", "Q9": "Khuyến mãi/giảm giá", "Q10": "Ý định tiếp tục mua"};
+const MODEL_R2 = 0.343;
+const N_TOTAL = 200;
+
+const QIVS = ['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8','Q9'];
+const QALL = ['Q1','Q2','Q3','Q4','Q5','Q6','Q7','Q8','Q9','Q10'];
+const CHART_COLORS = ['#DB2777','#F97316','#FACC15','#10B981','#6366F1','#06B6D4','#F472B6','#84CC16','#A855F7'];
+
+function fmtInt(v){ if(v==null||isNaN(v)) return '-'; return Math.round(v).toLocaleString('vi-VN'); }
+function fmtNum(v,d=1){ if(v==null||isNaN(v)) return '-'; return v.toFixed(d); }
+function fmtPct(v,d=1){ if(v==null||isNaN(v)) return '-'; return v.toFixed(d)+'%'; }
+
+let filteredData = [...RAW_DATA];
+let activeFilters = { gender: 'all', residence: 'all', age: 'all', search: '' };
+let chartInstances = {};
+let echartInstances = {};
+
+function ageGroup(age){
+  if(age>=18 && age<=24) return '18-24';
+  if(age>=25 && age<=31) return '25-31';
+  if(age>=32 && age<=38) return '32-38';
+  if(age>=39 && age<=45) return '39-45';
+  return 'khác';
+}
+
+function applyFilters(){
+  filteredData = RAW_DATA.filter(r=>{
+    if(activeFilters.gender!=='all' && r.gioiTinh!==activeFilters.gender) return false;
+    if(activeFilters.residence!=='all' && r.noiO!==activeFilters.residence) return false;
+    if(activeFilters.age!=='all' && ageGroup(r.tuoi)!==activeFilters.age) return false;
+    if(activeFilters.search){
+      const term = activeFilters.search.toLowerCase();
+      const hay = `${r.stt} ${r.tuoi} ${r.gioiTinh} ${r.noiO} ${QALL.map(q=>r[q]).join(' ')}`.toLowerCase();
+      if(!hay.includes(term)) return false;
+    }
+    return true;
+  });
+  renderAll();
+}
+
+function resetFilters(){
+  activeFilters = { gender:'all', residence:'all', age:'all', search:'' };
+  document.getElementById('filterGender').value='all';
+  document.getElementById('filterResidence').value='all';
+  document.getElementById('filterAge').value='all';
+  document.getElementById('searchInput').value='';
+  applyFilters();
+}
+
+function updateFilterChips(){
+  const chips = document.getElementById('filterChips');
+  chips.innerHTML='';
+  if(activeFilters.gender!=='all') chips.innerHTML += `<span class="chip">🚻 ${activeFilters.gender} <button onclick="activeFilters.gender='all';document.getElementById('filterGender').value='all';applyFilters();">×</button></span>`;
+  if(activeFilters.residence!=='all') chips.innerHTML += `<span class="chip">🏘️ ${activeFilters.residence} <button onclick="activeFilters.residence='all';document.getElementById('filterResidence').value='all';applyFilters();">×</button></span>`;
+  if(activeFilters.age!=='all') chips.innerHTML += `<span class="chip">🎂 ${activeFilters.age} tuổi <button onclick="activeFilters.age='all';document.getElementById('filterAge').value='all';applyFilters();">×</button></span>`;
+  if(activeFilters.search) chips.innerHTML += `<span class="chip">🔍 ${activeFilters.search} <button onclick="activeFilters.search='';document.getElementById('searchInput').value='';applyFilters();">×</button></span>`;
+}
+
+function showToast(message){
+  const toast = document.createElement('div');
+  toast.className='toast';
+  toast.style.animation='slideUp 0.25s ease';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(()=>{ toast.style.opacity='0'; toast.style.transition='opacity 0.3s'; setTimeout(()=>toast.remove(),300); }, 2600);
+}
+
+function animateNumber(el, end, formatter, duration=900){
+  const start=0, t0=performance.now();
+  function step(t){
+    const p = Math.min((t-t0)/duration,1);
+    const eased = 1-Math.pow(1-p,4);
+    el.textContent = formatter(start+(end-start)*eased);
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// ============ KPI ============
+function renderKPIs(){
+  const grid = document.getElementById('kpiGrid');
+  const n = filteredData.length;
+  const avgAge = n? filteredData.reduce((a,r)=>a+r.tuoi,0)/n : 0;
+  const avgQ10 = n? filteredData.reduce((a,r)=>a+r.Q10,0)/n : 0;
+  const pctHigh = n? filteredData.filter(r=>r.Q10>=4).length/n*100 : 0;
+
+  const cards = [
+    {icon:'👥', label:'Số người khảo sát', value:n, fmt:fmtInt, foot:`trên tổng ${N_TOTAL} phản hồi`},
+    {icon:'🎂', label:'Tuổi trung bình', value:avgAge, fmt:v=>fmtNum(v,1), foot:'tuổi'},
+    {icon:'🎯', label:'Điểm TB ý định mua', value:avgQ10, fmt:v=>fmtNum(v,2)+'/5', foot:'thang Likert 5 mức'},
+    {icon:'✅', label:'Tỉ lệ ý định mua cao', value:pctHigh, fmt:v=>fmtPct(v,1), foot:'đáp viên cho điểm Q10 ≥ 4'},
+  ];
+  grid.innerHTML = cards.map(c=>`
+    <div class="kpi-card">
+      <div class="kpi-icon">${c.icon}</div>
+      <div class="kpi-label">${c.label}</div>
+      <div class="kpi-value" id="kpi-${c.label}">0</div>
+      <div class="kpi-foot">${c.foot}</div>
+    </div>`).join('');
+  cards.forEach(c=>{
+    const el = document.getElementById(`kpi-${c.label}`);
+    animateNumber(el, c.value, c.fmt);
+  });
+}
+
+// ============ INSIGHTS ============
+function renderInsights(){
+  const n = filteredData.length;
+  const list = document.getElementById('insightList');
+  if(n===0){ list.innerHTML = `<li class="insight-item">Không có dữ liệu phù hợp với bộ lọc hiện tại.</li>`; return; }
+
+  const avgAge = filteredData.reduce((a,r)=>a+r.tuoi,0)/n;
+  const pctHigh = filteredData.filter(r=>r.Q10>=4).length/n*100;
+  const genderCount = {};
+  filteredData.forEach(r=> genderCount[r.gioiTinh]=(genderCount[r.gioiTinh]||0)+1);
+  const topGender = Object.entries(genderCount).sort((a,b)=>b[1]-a[1])[0];
+  const urbanPct = filteredData.filter(r=>r.noiO==='Thành thị').length/n*100;
+
+  const topDriver = REG_RESULT[0];
+  const sigDrivers = REG_RESULT.filter(r=>r.sig).map(r=>r.label);
+
+  const insights = [
+    `📋 Tập dữ liệu đang hiển thị <b>${n}</b> phản hồi (tuổi trung bình <b>${avgAge.toFixed(1)}</b>), trong đó <b>${pctHigh.toFixed(1)}%</b> có ý định tiếp tục mua sản phẩm (Q10 ≥ 4 điểm).`,
+    `🚻 Nhóm <b>${topGender[0]}</b> chiếm đa số với <b>${(topGender[1]/n*100).toFixed(1)}%</b> mẫu; <b>${urbanPct.toFixed(1)}%</b> đáp viên sống ở khu vực thành thị.`,
+    `🏆 <b>${topDriver.label}</b> là yếu tố ảnh hưởng mạnh nhất đến ý định mua (β chuẩn hóa = ${topDriver.beta}, p ${topDriver.p<0.001?'< 0.001':'= '+topDriver.p}) — tính trên toàn bộ mẫu.`,
+    `📐 Mô hình hồi quy 9 yếu tố giải thích <b>${(MODEL_R2*100).toFixed(1)}%</b> biến thiên của ý định mua (R² = ${MODEL_R2}). Các yếu tố có ý nghĩa thống kê (p &lt; 0.05): <b>${sigDrivers.join(', ')}</b>.`
+  ];
+  list.innerHTML = insights.map(i=>`<li class="insight-item">${i}</li>`).join('');
+}
+
+// ============ CHART: REGRESSION (static, full sample) ============
+function renderChartRegression(){
+  const ctx = document.getElementById('chartRegression');
+  const sorted = [...REG_RESULT].sort((a,b)=>Math.abs(b.beta)-Math.abs(a.beta));
+  const labels = sorted.map(r=>r.label);
+  const data = sorted.map(r=>r.beta);
+  const colors = sorted.map(r=> r.sig ? '#DB2777' : '#D6CDD2');
+
+  if(chartInstances.reg) chartInstances.reg.destroy();
+  chartInstances.reg = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[{ data, backgroundColor: colors, borderRadius:6, barThickness:18 }] },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ display:false },
+        tooltip:{ callbacks:{ label: ctx => {
+          const r = sorted[ctx.dataIndex];
+          return `β = ${r.beta}  •  p ${r.p<0.001?'< 0.001':'= '+r.p}  •  ${r.sig?'Có ý nghĩa thống kê':'Không có ý nghĩa thống kê'}`;
+        }}}
+      },
+      scales:{
+        x:{ grid:{ color:'#F0E3E9' }, title:{ display:true, text:'Hệ số hồi quy chuẩn hóa (β)', font:{size:11} } },
+        y:{ grid:{ display:false } }
+      }
+    }
+  });
+}
+
+// ============ CHART: GENDER DONUT ============
+function renderChartGender(){
+  const ctx = document.getElementById('chartGender');
+  const counts = {};
+  filteredData.forEach(r=> counts[r.gioiTinh]=(counts[r.gioiTinh]||0)+1);
+  const labels = Object.keys(counts);
+  const values = Object.values(counts);
+
+  if(chartInstances.gender) chartInstances.gender.destroy();
+  chartInstances.gender = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data: values, backgroundColor: labels.map((_,i)=>CHART_COLORS[i%CHART_COLORS.length]), borderWidth:3, borderColor:'#fff' }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{
+        legend:{ position:'bottom', labels:{ usePointStyle:true, padding:14, font:{size:12} } },
+        tooltip:{ callbacks:{ label: c => { const total=values.reduce((a,b)=>a+b,0); const pct=(c.parsed/total*100).toFixed(1); return `${c.label}: ${c.parsed} (${pct}%)`; } } }
+      },
+      onClick:(evt, els)=>{
+        if(els.length>0){
+          const label = labels[els[0].index];
+          activeFilters.gender = label;
+          document.getElementById('filterGender').value = label;
+          applyFilters();
+          showToast(`Đang lọc theo giới tính: ${label}. Bấm Reset để xem tất cả.`);
+        }
+      },
+      onHover:(e,els)=>{ e.native.target.style.cursor = els[0]?'pointer':'default'; }
+    }
+  });
+}
+
+// ============ CHART: RESIDENCE ============
+function renderChartResidence(){
+  const ctx = document.getElementById('chartResidence');
+  const counts = {};
+  filteredData.forEach(r=> counts[r.noiO]=(counts[r.noiO]||0)+1);
+  const labels = Object.keys(counts);
+  const values = Object.values(counts);
+
+  if(chartInstances.residence) chartInstances.residence.destroy();
+  chartInstances.residence = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data: values, backgroundColor: [CHART_COLORS[1], CHART_COLORS[5], CHART_COLORS[3]], borderWidth:3, borderColor:'#fff' }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{
+        legend:{ position:'bottom', labels:{ usePointStyle:true, padding:14, font:{size:12} } },
+        tooltip:{ callbacks:{ label: c => { const total=values.reduce((a,b)=>a+b,0); const pct=(c.parsed/total*100).toFixed(1); return `${c.label}: ${c.parsed} (${pct}%)`; } } }
+      },
+      onClick:(evt, els)=>{
+        if(els.length>0){
+          const label = labels[els[0].index];
+          activeFilters.residence = label;
+          document.getElementById('filterResidence').value = label;
+          applyFilters();
+          showToast(`Đang lọc theo nơi ở: ${label}. Bấm Reset để xem tất cả.`);
+        }
+      },
+      onHover:(e,els)=>{ e.native.target.style.cursor = els[0]?'pointer':'default'; }
+    }
+  });
+}
+
+// ============ CHART: AGE DISTRIBUTION ============
+function renderChartAge(){
+  const ctx = document.getElementById('chartAge');
+  const groups = ['18-24','25-31','32-38','39-45'];
+  const counts = groups.map(g=> filteredData.filter(r=>ageGroup(r.tuoi)===g).length);
+
+  if(chartInstances.age) chartInstances.age.destroy();
+  chartInstances.age = new Chart(ctx, {
+    type:'bar',
+    data:{ labels: groups.map(g=>g+' tuổi'), datasets:[{ data: counts, backgroundColor: CHART_COLORS[2], borderRadius:8, maxBarThickness:48 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: c=> `${c.parsed.y} người` } } },
+      scales:{ x:{ grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ precision:0 }, grid:{ color:'#F0E3E9' } } },
+      onClick:(evt, els)=>{
+        if(els.length>0){
+          const g = groups[els[0].index];
+          activeFilters.age = g;
+          document.getElementById('filterAge').value = g;
+          applyFilters();
+          showToast(`Đang lọc theo nhóm tuổi: ${g}. Bấm Reset để xem tất cả.`);
+        }
+      },
+      onHover:(e,els)=>{ e.native.target.style.cursor = els[0]?'pointer':'default'; }
+    }
+  });
+}
+
+// ============ CHART: Q10 DISTRIBUTION ============
+function renderChartQ10(){
+  const ctx = document.getElementById('chartQ10');
+  const scores = [1,2,3,4,5];
+  const counts = scores.map(s=> filteredData.filter(r=>r.Q10===s).length);
+
+  if(chartInstances.q10) chartInstances.q10.destroy();
+  chartInstances.q10 = new Chart(ctx, {
+    type:'bar',
+    data:{ labels: scores.map(s=>'Điểm '+s), datasets:[{ data: counts, backgroundColor: scores.map(s=> s>=4? '#10B981' : s===3? '#FACC15' : '#EF4444'), borderRadius:8, maxBarThickness:40 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: c=> `${c.parsed.y} người` } } },
+      scales:{ x:{ grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ precision:0 }, grid:{ color:'#F0E3E9' } } }
+    }
+  });
+}
+
+// ============ CHART: CORRELATION HEATMAP (ECharts, live) ============
+function pearson(a,b){
+  const n=a.length;
+  const ma=a.reduce((x,y)=>x+y,0)/n, mb=b.reduce((x,y)=>x+y,0)/n;
+  let num=0, da=0, db=0;
+  for(let i=0;i<n;i++){ const xa=a[i]-ma, xb=b[i]-mb; num+=xa*xb; da+=xa*xa; db+=xb*xb; }
+  if(da===0||db===0) return 0;
+  return num/Math.sqrt(da*db);
+}
+
+function renderChartHeatmap(){
+  const el = document.getElementById('chartHeatmap');
+  if(!echartInstances.heatmap) echartInstances.heatmap = echarts.init(el);
+  const chart = echartInstances.heatmap;
+
+  if(filteredData.length < 3){
+    chart.clear();
+    chart.setOption({ title:{ text:'Không đủ dữ liệu để tính tương quan', left:'center', top:'middle', textStyle:{fontSize:13, color:'#A8959F'} } });
+    return;
+  }
+
+  const cols = QALL.map(q=>q + (q==='Q10'?' (Y)':''));
+  const matrix = [];
+  const series = QALL.map(q=> filteredData.map(r=>r[q]));
+  for(let i=0;i<QALL.length;i++){
+    for(let j=0;j<QALL.length;j++){
+      const r = pearson(series[i], series[j]);
+      matrix.push([j, i, Math.round(r*100)/100]);
+    }
+  }
+
+  chart.setOption({
+    tooltip:{ position:'top', formatter: p => `${cols[p.value[1]]} × ${cols[p.value[0]]}<br/>r = ${p.value[2]}` },
+    grid:{ left:50, right:20, top:20, bottom:40 },
+    xAxis:{ type:'category', data: cols, splitArea:{show:true}, axisLabel:{fontSize:10} },
+    yAxis:{ type:'category', data: cols, splitArea:{show:true}, axisLabel:{fontSize:10} },
+    visualMap:{
+      min:-1, max:1, calculable:true, orient:'horizontal', left:'center', bottom:0,
+      inRange:{ color:['#6366F1','#FFFFFF','#DB2777'] }, textStyle:{fontSize:10}
+    },
+    series:[{
+      type:'heatmap', data: matrix, label:{ show:true, fontSize:9, formatter: p=>p.value[2] },
+      emphasis:{ itemStyle:{ shadowBlur:8, shadowColor:'rgba(0,0,0,0.3)' } }
+    }]
+  });
+}
+
+// ============ CHART: RADAR by gender (static, full sample) ============
+function renderChartRadar(){
+  const el = document.getElementById('chartRadar');
+  if(!echartInstances.radar) echartInstances.radar = echarts.init(el);
+  const chart = echartInstances.radar;
+
+  const genders = [...new Set(RAW_DATA.map(r=>r.gioiTinh))];
+  const indicators = QIVS.map(q=>({ name:q, max:5, min:1 }));
+  const colors = ['#DB2777','#6366F1','#10B981'];
+
+  const seriesData = genders.map((g,idx)=>{
+    const subset = RAW_DATA.filter(r=>r.gioiTinh===g);
+    const values = QIVS.map(q=> subset.length? +(subset.reduce((a,r)=>a+r[q],0)/subset.length).toFixed(2) : 0);
+    return { value: values, name: `${g} (n=${subset.length})`, lineStyle:{color:colors[idx%colors.length]}, areaStyle:{color:colors[idx%colors.length], opacity:0.08}, itemStyle:{color:colors[idx%colors.length]} };
+  });
+
+  chart.setOption({
+    tooltip:{ trigger:'item' },
+    legend:{ bottom:0, textStyle:{fontSize:11} },
+    radar:{ indicator: indicators, radius:'62%', axisName:{fontSize:10, color:'#6B5B66'}, splitArea:{areaStyle:{color:['#fff','#FDF2F8']}} },
+    series:[{ type:'radar', data: seriesData, symbolSize:4 }]
+  });
+}
+
+// ============ TABLE ============
+function renderTable(){
+  const wrapper = document.getElementById('dataTable');
+  wrapper.innerHTML = '';
+  if(filteredData.length===0){
+    wrapper.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📊</div><p>Không có dữ liệu phù hợp với bộ lọc này.</p><button class="btn btn-secondary" onclick="resetFilters()" style="margin-top:10px">Bỏ lọc</button></div>`;
+    return;
+  }
+  const columns = [
+    {key:'stt', label:'STT'}, {key:'tuoi', label:'Tuổi'}, {key:'gioiTinh', label:'Giới tính'}, {key:'noiO', label:'Nơi ở'},
+    ...QALL.map(q=>({key:q, label:q}))
+  ];
+  new gridjs.Grid({
+    columns: columns.map(c=>({ name: c.label })),
+    data: filteredData.map(r=> columns.map(c=> r[c.key])),
+    sort: true,
+    pagination: { limit: 15, summary: true },
+    language:{
+      search:{placeholder:'🔍 Tìm kiếm...'},
+      sort:{sortAsc:'Sắp xếp tăng', sortDesc:'Sắp xếp giảm'},
+      pagination:{previous:'Trước', next:'Sau', showing:'Hiển thị', results:()=>'kết quả', to:'đến', of:'trên'},
+      noRecordsFound:'Không có dữ liệu phù hợp', error:'Có lỗi xảy ra'
+    },
+    style:{ table:{'font-size':'13px'}, th:{'background-color':'#FDF2F8','font-weight':'700'} }
+  }).render(wrapper);
+}
+
+function renderAll(){
+  renderKPIs();
+  renderInsights();
+  renderChartGender();
+  renderChartResidence();
+  renderChartAge();
+  renderChartQ10();
+  renderChartHeatmap();
+  renderTable();
+  updateFilterChips();
+}
+
+function populateFilters(){
+  const genders = [...new Set(RAW_DATA.map(r=>r.gioiTinh))].sort();
+  const residences = [...new Set(RAW_DATA.map(r=>r.noiO))].sort();
+  const gSel = document.getElementById('filterGender');
+  genders.forEach(g=>{ const o=document.createElement('option'); o.value=g; o.textContent=g; gSel.appendChild(o); });
+  const rSel = document.getElementById('filterResidence');
+  residences.forEach(r=>{ const o=document.createElement('option'); o.value=r; o.textContent=r; rSel.appendChild(o); });
+}
+
+window.addEventListener('resize', ()=>{
+  Object.values(echartInstances).forEach(c=>c && c.resize());
+});
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  populateFilters();
+  document.getElementById('filterGender').addEventListener('change', e=>{ activeFilters.gender=e.target.value; applyFilters(); });
+  document.getElementById('filterResidence').addEventListener('change', e=>{ activeFilters.residence=e.target.value; applyFilters(); });
+  document.getElementById('filterAge').addEventListener('change', e=>{ activeFilters.age=e.target.value; applyFilters(); });
+  let debTimer;
+  document.getElementById('searchInput').addEventListener('input', e=>{
+    clearTimeout(debTimer);
+    debTimer = setTimeout(()=>{ activeFilters.search = e.target.value; applyFilters(); }, 300);
+  });
+
+  document.getElementById('generatedDate').textContent = new Date().toLocaleDateString('vi-VN');
+  document.getElementById('dataInfo').textContent = `${RAW_DATA.length} dòng dữ liệu`;
+
+  renderChartRegression();
+  renderChartRadar();
+  applyFilters();
+});
+</script>
+
+</body>
+</html>
